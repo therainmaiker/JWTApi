@@ -11,6 +11,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using jwtapitoken.Data;
+using jwtapitoken.Helpers;
+using jwtapitoken.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace jwtapitoken
 {
@@ -26,6 +31,16 @@ namespace jwtapitoken
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Mapping values From appsetings
+            // to JWT Class in Helpers
+            services.Configure<JWT>(Configuration.GetSection("JWT"));
+
+            services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
