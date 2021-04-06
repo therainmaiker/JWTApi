@@ -10,12 +10,16 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using jwtapitoken.Data;
 using jwtapitoken.Helpers;
 using jwtapitoken.Models;
+using jwtapitoken.services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace jwtapitoken
 {
@@ -42,6 +46,43 @@ namespace jwtapitoken
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
                 
 
+            // AUTH SERVICE
+
+            services.AddScoped<IAuthService, AuthService>();
+
+
+            // authorization options
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(o =>
+                {
+                    o.RequireHttpsMetadata = false;
+                    o.SaveToken = false;
+                    o.TokenValidationParameters = new TokenValidationParameters
+                    {
+
+                        // validation
+                        ValidateIssuerSigningKey = true,
+                        
+                        ValidateIssuer = true,
+                        
+                        ValidateAudience = true,
+                        
+                        ValidateLifetime = true,
+                        
+                        ValidIssuer = Configuration["JWT:Issuer"],
+                        
+                        ValidAudience = Configuration["JWT:Audience"],
+                        
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT:Key"]))
+                    };
+                });
+
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -62,7 +103,7 @@ namespace jwtapitoken
             app.UseHttpsRedirection();
 
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

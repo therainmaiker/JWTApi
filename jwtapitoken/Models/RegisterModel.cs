@@ -2,18 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace jwtapitoken.Models
 {
-    public class AppUser:IdentityUser
+    public class RegisterModel
     {
-        
+
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public int ResCounter { get; set; } = 0;
-        public byte[] ImgProfile { get; set; } 
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+
 
     }
 }
