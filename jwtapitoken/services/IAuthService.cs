@@ -6,12 +6,12 @@ using jwtapitoken.Models;
 
 namespace jwtapitoken.services
 {
-    interface IAuthService
+    public interface IAuthService
     {
 
 
         Task<AuthModel> RegisterAsync(RegisterModel model);
-
+         Task<AuthModel> GetTokenAsync(TokenRequestModel model);
 
     }
 }

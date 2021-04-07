@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using jwtapitoken.Helpers;
 using jwtapitoken.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -54,12 +55,14 @@ namespace jwtapitoken.services
 
 
           // errors from registration 
+
+
           if (!Result.Succeeded)
           {
               var errors = string.Empty;
               foreach (var er in Result.Errors)
               {
-                  errors += $"{er.Description},";
+                  errors += $"{er.Description},"+ Environment.NewLine ;
 
 
               }
@@ -71,16 +74,64 @@ namespace jwtapitoken.services
           await _userManager.AddToRoleAsync(User, "Student");
 
 
+          var JwtSecurityToken = await CreateJwtToken(User);
+
+
+
+
+          // return data 
+
+          return new AuthModel
+          {
+              Email = User.Email,
+              ExpiresOn = JwtSecurityToken.ValidTo,
+              IsAuthenticated = true,
+              Roles = new List<string> { "User"} ,
+              Token = new JwtSecurityTokenHandler().WriteToken(JwtSecurityToken) ,
+              UserName = User.UserName
+
+          };
+
+
         }
+
+        public async Task<AuthModel> GetTokenAsync(TokenRequestModel model)
+        {
+            var authModel = new AuthModel();
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user is null || !await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                authModel.Message = "Email or Password is incorrect!";
+                return authModel;
+            }
+
+            var jwtSecurityToken = await CreateJwtToken(user);
+            var rolesList = await _userManager.GetRolesAsync(user);
+
+            authModel.IsAuthenticated = true;
+            authModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            authModel.Email = user.Email;
+            authModel.UserName = user.UserName;
+            authModel.ExpiresOn = jwtSecurityToken.ValidTo;
+            authModel.Roles = rolesList.ToList();
+
+            return authModel;
+        }
+
+
+
+
+
+
+        // generate JWT Token
 
         private async Task<JwtSecurityToken> CreateJwtToken(AppUser user)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
             var roles = await _userManager.GetRolesAsync(user);
-            var roleClaims = new List<Claim>();
-
-            foreach (var role in roles)
-                roleClaims.Add(new Claim("roles", role));
+            var roleClaims = roles.Select(role => new Claim("roles", role)).ToList();
 
             var claims = new[]
             {
